@@ -1,0 +1,323 @@
+/*
+ * Trading card styles. The outer element is a size container; every length
+ * inside is in cqw (percent of the card's width), so the card is a scalable
+ * drawing: 240px in the gallery, 2.5in on paper, 750px in a 300-DPI PNG.
+ * Height is 140cqw (5:7).
+ */
+
+.pm-card {
+  container-type: inline-size;
+  aspect-ratio: 5 / 7;
+  width: 100%;
+  font-family: "Nunito", system-ui, sans-serif;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.pm-card__frame {
+  position: relative;
+  box-sizing: border-box;
+  width: 100cqw;
+  height: 140cqw;
+  display: flex;
+  flex-direction: column;
+  padding: 4.2cqw 4.6cqw 2.6cqw;
+  border-radius: 4.8cqw;
+  /* Gold outer border, then the type-colored panel. */
+  background:
+    linear-gradient(180deg, var(--panel-top), var(--panel-bottom)) padding-box,
+    linear-gradient(135deg, #ffe680, #f2b51d 40%, #ffd84a 60%, #d99a0b) border-box;
+  border: 3.2cqw solid transparent;
+  color: var(--ink);
+  overflow: hidden;
+}
+
+/* --- Header ---------------------------------------------------------------- */
+
+.pm-card__header {
+  flex-shrink: 0;
+}
+
+.pm-card__stage-row {
+  display: flex;
+  align-items: center;
+  gap: 1.6cqw;
+  height: 4.4cqw;
+  min-width: 0;
+}
+
+.pm-card__stage {
+  flex-shrink: 0;
+  padding: 0.2cqw 2cqw;
+  border-radius: 99cqw;
+  background: linear-gradient(180deg, #f4f6f8, #b9c2cc);
+  color: #1e2a4a;
+  font-size: 2.6cqw;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow: inset 0 -0.3cqw 0 rgba(0, 0, 0, 0.15);
+}
+
+.pm-card__evolves {
+  font-size: 2.5cqw;
+  font-weight: 700;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pm-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 1.4cqw;
+  height: 9.4cqw;
+}
+
+.pm-card__name {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: "Fredoka", "Nunito", system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pm-card__hp {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6cqw;
+  font-family: "Fredoka", "Nunito", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 6.6cqw;
+  line-height: 1;
+  color: #c62828;
+}
+
+.pm-card__hp small {
+  font-size: 2.8cqw;
+  font-weight: 800;
+}
+
+/* --- Artwork ---------------------------------------------------------------- */
+
+.pm-card__art {
+  position: relative;
+  flex-shrink: 0;
+  height: 56cqw;
+  margin-top: 1cqw;
+  border: 1.4cqw solid transparent;
+  border-radius: 1.4cqw;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(135deg, #f8f8f8, #9aa3ad 50%, #e9ecef) border-box;
+  box-shadow: 0 0.6cqw 1.4cqw rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.pm-card__art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pm-card__art-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2cqw;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.9), transparent 60%),
+    linear-gradient(180deg, var(--panel-top), var(--panel-bottom));
+  font-size: 3.4cqw;
+  font-weight: 800;
+  text-align: center;
+}
+
+.pm-card__art-placeholder-icon {
+  opacity: 0.35;
+}
+
+.pm-card__art-busy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2cqw;
+  background: rgba(30, 42, 74, 0.55);
+  color: #fff;
+  font-family: "Fredoka", system-ui, sans-serif;
+  font-size: 4.6cqw;
+  font-weight: 600;
+}
+
+.pm-card__spinner {
+  width: 9cqw;
+  height: 9cqw;
+  border: 1.4cqw solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffcb3d;
+  border-radius: 50%;
+  animation: pm-spin 0.9s linear infinite;
+}
+
+@keyframes pm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pm-card__strip {
+  flex-shrink: 0;
+  margin: 1.2cqw 3cqw 0;
+  padding: 0.4cqw 0;
+  border-radius: 99cqw;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  font-size: 2.5cqw;
+  font-weight: 700;
+  font-style: italic;
+  text-align: center;
+}
+
+/* --- Attacks ---------------------------------------------------------------- */
+
+.pm-card__attacks {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  gap: 1cqw;
+  padding: 1cqw 0.6cqw;
+  overflow: hidden;
+}
+
+.pm-card__no-attacks {
+  margin: 0;
+  font-size: 3.2cqw;
+  font-style: italic;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.pm-card__attack-row {
+  display: flex;
+  align-items: center;
+  gap: 1.6cqw;
+  min-height: 6cqw;
+}
+
+.pm-card__cost {
+  display: flex;
+  gap: 0.5cqw;
+  width: 23cqw;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.pm-card__cost-free {
+  width: 5.4cqw;
+  height: 5.4cqw;
+}
+
+.pm-card__attack-name {
+  flex: 1;
+  min-width: 0;
+  font-family: "Fredoka", "Nunito", system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pm-card__damage {
+  min-width: 10cqw;
+  font-family: "Fredoka", "Nunito", system-ui, sans-serif;
+  font-size: 6.6cqw;
+  font-weight: 700;
+  line-height: 1;
+  text-align: right;
+}
+
+.pm-card__effect {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  margin: 0.4cqw 0 0;
+  overflow: hidden;
+  font-size: 2.85cqw;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+/* --- Footer ----------------------------------------------------------------- */
+
+.pm-card__footer {
+  flex-shrink: 0;
+}
+
+.pm-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1cqw;
+  padding-top: 1.2cqw;
+  border-top: 0.4cqw solid rgba(0, 0, 0, 0.25);
+}
+
+.pm-card__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4cqw;
+}
+
+.pm-card__stat-label {
+  font-size: 2.3cqw;
+  font-weight: 800;
+  text-transform: lowercase;
+  opacity: 0.8;
+}
+
+.pm-card__stat-value {
+  display: flex;
+  align-items: center;
+  gap: 0.5cqw;
+  min-height: 4.6cqw;
+  font-size: 3.2cqw;
+}
+
+.pm-card__flavor {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  margin: 1.2cqw 0 0;
+  padding: 0.8cqw 1.6cqw;
+  overflow: hidden;
+  border: 0.35cqw solid rgba(0, 0, 0, 0.3);
+  border-radius: 1cqw;
+  background: rgba(255, 255, 255, 0.35);
+  font-size: 2.55cqw;
+  font-style: italic;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.pm-card__credits {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.8cqw;
+  font-size: 2.2cqw;
+  font-weight: 800;
+  opacity: 0.75;
+}

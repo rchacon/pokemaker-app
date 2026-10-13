@@ -1,0 +1,146 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fredoka", ui-rounded, system-ui, sans-serif;
+  --font-sans: "Nunito", system-ui, sans-serif;
+  --color-ink: #1e2a4a;
+  --color-ink-soft: #4a5578;
+  --color-sun: #ffcb3d;
+  --color-sun-dark: #e0a800;
+  --color-berry: #ef5350;
+  --color-berry-dark: #c62828;
+  --color-sky: #4fc3f7;
+  --color-sky-dark: #0288d1;
+  --color-leaf: #66bb6a;
+  --color-leaf-dark: #2e7d32;
+  --color-cream: #fff8e7;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  background-color: #dff3ff;
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.85) 0 9%, transparent 9.5%),
+    radial-gradient(circle at 85% 8%, rgba(255, 255, 255, 0.7) 0 6%, transparent 6.5%),
+    linear-gradient(180deg, #c8ecff 0%, #fff6dc 100%);
+  background-attachment: fixed;
+}
+
+/* Chunky, tappable buttons: thick outline and a "pressable" bottom edge. */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    padding: 0.5rem 1.15rem;
+    border: 3px solid var(--color-ink);
+    border-radius: 1rem;
+    background: #fff;
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.1;
+    box-shadow: 0 4px 0 var(--color-ink);
+    cursor: pointer;
+    user-select: none;
+    transition:
+      transform 0.06s,
+      box-shadow 0.06s;
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--color-ink);
+  }
+  .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  .btn:focus-visible {
+    outline: 4px solid var(--color-sky);
+    outline-offset: 2px;
+  }
+  .btn-primary {
+    background: var(--color-sun);
+  }
+  .btn-go {
+    background: var(--color-leaf);
+    color: #fff;
+  }
+  .btn-magic {
+    background: linear-gradient(135deg, #b16cea, #ff5e69 60%, #ffa84b);
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+  }
+  .btn-danger {
+    background: var(--color-berry);
+    color: #fff;
+  }
+  .btn-sm {
+    min-height: 2.5rem;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.95rem;
+    border-radius: 0.8rem;
+  }
+  .btn-lg {
+    min-height: 3.75rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1.35rem;
+  }
+
+  .panel {
+    border: 3px solid var(--color-ink);
+    border-radius: 1.5rem;
+    background: #fff;
+    box-shadow: 0 6px 0 rgba(30, 42, 74, 0.9);
+  }
+
+  .input {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.55rem 0.85rem;
+    border: 3px solid #c9d2e3;
+    border-radius: 0.9rem;
+    background: #fff;
+    color: var(--color-ink);
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+  .input:focus {
+    border-color: var(--color-sky-dark);
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(79, 195, 247, 0.35);
+  }
+  textarea.input {
+    font-weight: 600;
+    resize: vertical;
+  }
+}
+
+@media print {
+  body {
+    background: #fff !important;
+  }
+}
+
+@keyframes pm-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-8px);
+  }
+  75% {
+    transform: translateX(8px);
+  }
+}
