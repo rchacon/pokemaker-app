@@ -11,7 +11,7 @@ React Testing Library. Sibling repositories: [`pokemaker-api`](../pokemaker-api)
 
 The backend must be running first. See `../pokemaker-api/README.md`, which comes
 down to `docker compose up -d`, `python scripts/init_local.py`, then
-`uvicorn src.main:app --reload`.
+`uvicorn pokemaker.main:app --reload`.
 
 ```bash
 npm install
