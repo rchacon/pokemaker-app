@@ -12,6 +12,7 @@ export type SaveState =
   | "saving"
   | "offline" // couldn't reach the server; kept locally and retrying
   | "conflict" // someone saved a newer version elsewhere
+  | "locked" // the unlock expired; waiting for the PIN (edits are kept locally)
   | "error"
   | "missing";
 
@@ -40,6 +41,7 @@ export function useCardEditor(profileId: string, cardId: string | undefined, deb
   const fieldsRef = useRef<CardFields | null>(null);
   const cardRef = useRef<Card | null>(null);
   const conflictRef = useRef<Card | null>(null);
+  const lockedRef = useRef(false);
   const savingRef = useRef(false);
   const saveAgainRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -115,7 +117,7 @@ export function useCardEditor(profileId: string, cardId: string | undefined, deb
       clearTimeout(timerRef.current);
       const current = cardRef.current;
       const latest = fieldsRef.current;
-      if (current && latest && !conflictRef.current && !sameFields(latest, toFields(current))) {
+      if (current && latest && !conflictRef.current && !lockedRef.current && !sameFields(latest, toFields(current))) {
         void api.updateCard(profileId, current.cardId, latest, current.version).then(
           () => drafts.clear(profileId, current.cardId),
           () => {}, // the local draft keeps the edits
@@ -129,7 +131,7 @@ export function useCardEditor(profileId: string, cardId: string | undefined, deb
   const save = useCallback(async () => {
     const current = cardRef.current;
     const latest = fieldsRef.current;
-    if (!current || !latest || conflictRef.current) return;
+    if (!current || !latest || conflictRef.current || lockedRef.current) return;
     if (savingRef.current) {
       saveAgainRef.current = true;
       return;
@@ -155,7 +157,10 @@ export function useCardEditor(profileId: string, cardId: string | undefined, deb
         setSaveState("dirty");
       }
     } catch (error) {
-      if (error instanceof ApiError && error.code === "VERSION_CONFLICT") {
+      if (error instanceof ApiError && error.code === "PIN_REQUIRED") {
+        lockedRef.current = true;
+        setSaveState("locked");
+      } else if (error instanceof ApiError && error.code === "VERSION_CONFLICT") {
         const newer = error.details.current as Card;
         conflictRef.current = newer;
         setConflict(newer);
@@ -187,7 +192,7 @@ export function useCardEditor(profileId: string, cardId: string | undefined, deb
       setFields(value);
       const current = cardRef.current;
       drafts.set(profileId, current?.cardId ?? NEW_CARD, value, current?.version ?? null);
-      if (current && !conflictRef.current) {
+      if (current && !conflictRef.current && !lockedRef.current) {
         setSaveState("dirty");
         schedule();
       }
@@ -255,6 +260,12 @@ export function useCardEditor(profileId: string, cardId: string | undefined, deb
     [staleDraft, update, profileId],
   );
 
+  /** Call after the profile has been unlocked again to save the waiting edits. */
+  const resumeAfterUnlock = useCallback(() => {
+    lockedRef.current = false;
+    return saveRef.current();
+  }, []);
+
   const saveNow = useCallback(() => {
     clearTimeout(timerRef.current);
     return saveRef.current();
@@ -270,6 +281,7 @@ export function useCardEditor(profileId: string, cardId: string | undefined, deb
     update,
     create,
     saveNow,
+    resumeAfterUnlock,
     applyArtwork,
     resolveConflict,
     resolveStaleDraft,

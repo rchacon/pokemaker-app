@@ -1,13 +1,18 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { Avatar } from "../components/Avatar";
 import { Notice } from "../components/ui";
 import { useProfiles } from "../hooks/useProfiles";
 import { lastProfile } from "../lib/drafts";
+import { unlocks } from "../lib/unlock";
 
 export function ProfilePicker() {
   const { profiles, failed, retry } = useProfiles();
   const navigate = useNavigate();
   const last = lastProfile.get();
+
+  // Switching player locks every profile again, so nobody inherits a sibling's unlock.
+  useEffect(() => unlocks.clearAllExcept(), []);
 
   const choose = (profileId: string) => {
     lastProfile.set(profileId);
@@ -41,7 +46,14 @@ export function ProfilePicker() {
             onClick={() => choose(profile.profileId)}
           >
             <Avatar avatar={profile.avatar} size="6rem" />
-            <span className="font-display text-3xl font-semibold">{profile.displayName}</span>
+            <span className="font-display text-3xl font-semibold">
+              {profile.displayName}
+              {profile.hasPin && (
+                <span className="ml-2 text-2xl" title="Protected by a PIN" aria-label="(PIN protected)">
+                  🔒
+                </span>
+              )}
+            </span>
             {profile.profileId === last && (
               <span className="rounded-full bg-sun px-3 py-0.5 text-sm font-extrabold">Last played</span>
             )}

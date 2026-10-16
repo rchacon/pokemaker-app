@@ -8,6 +8,7 @@ const LABELS: Record<SaveState, { text: string; className: string }> = {
   saving: { text: "Saving…", className: "bg-slate-100" },
   offline: { text: "Saved on this device · retrying", className: "bg-sun/40" },
   conflict: { text: "Needs a choice", className: "bg-berry/25" },
+  locked: { text: "🔒 Needs the PIN to save", className: "bg-sun/40" },
   error: { text: "Couldn't save", className: "bg-berry/25" },
   missing: { text: "Card not found", className: "bg-berry/25" },
 };

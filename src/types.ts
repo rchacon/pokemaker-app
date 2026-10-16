@@ -65,7 +65,18 @@ export interface Profile {
   profileId: string;
   displayName: string;
   avatar: string;
+  /** A parent's PIN unlocks every profile in the family. */
+  role: "parent" | "player";
+  /** Whether changes to this profile need its PIN. */
+  hasPin: boolean;
   createdAt: string;
+}
+
+export interface UnlockResponse {
+  profileId: string;
+  token: string;
+  expiresAt: string;
+  byParent: boolean;
 }
 
 export interface Quota {

@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { ArtworkControls } from "../components/ArtworkControls";
 import { PokemonCard } from "../components/PokemonCard";
 import { SaveStatus } from "../components/SaveStatus";
+import { useUnlock } from "../components/UnlockProvider";
 import { CardForm } from "../components/editor/CardForm";
 import { Notice } from "../components/ui";
 import { useArtworkGeneration } from "../hooks/useArtworkGeneration";
@@ -19,6 +20,9 @@ export function Editor() {
   const editor = useCardEditor(profileId, cardId);
   const { profiles } = useProfiles();
   const profile = profiles?.find((p) => p.profileId === profileId);
+  // Only the stable function: the context object changes on every lock/unlock.
+  const { ensureUnlocked } = useUnlock();
+  const [allowed, setAllowed] = useState(false);
   const { quota, setQuota } = useQuota();
   const [otherCards, setOtherCards] = useState<Card[]>([]);
   const [view, setView] = useState<"edit" | "preview">("edit");
@@ -40,9 +44,38 @@ export function Editor() {
     );
   }, [profileId, cardId]);
 
+  // Editing a PIN-protected collection starts with the PIN. Cancelling goes back
+  // to the gallery, where anyone can still look at the cards.
+  useEffect(() => {
+    if (!profile) return;
+    let active = true;
+    void ensureUnlocked(profile).then((ok) => {
+      if (!active) return;
+      if (ok) setAllowed(true);
+      else navigate(`/p/${profileId}`);
+    });
+    return () => {
+      active = false;
+    };
+  }, [profile, ensureUnlocked, navigate, profileId]);
+
+  // The unlock expired (or a parent changed the PIN) while editing: ask again,
+  // then save the edits that were kept locally in the meantime.
+  const { saveState, resumeAfterUnlock } = editor;
+  useEffect(() => {
+    if (saveState !== "locked" || !profile) return;
+    void ensureUnlocked(profile, { force: true }).then((ok) => {
+      if (ok) void resumeAfterUnlock();
+      else navigate(`/p/${profileId}`);
+    });
+  }, [saveState, profile, ensureUnlocked, resumeAfterUnlock, navigate, profileId]);
+
   const { fields, card } = editor;
 
   if (profiles && !profile) return <Navigate to="/players" replace />;
+  if (!allowed) {
+    return <p className="p-8 font-display text-xl">🔒 Waiting for the PIN…</p>;
+  }
 
   if (editor.saveState === "missing") {
     return (
