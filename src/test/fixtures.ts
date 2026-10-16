@@ -1,8 +1,8 @@
 import type { Card, Profile, Quota } from "../types";
 
 export const PROFILES: Profile[] = [
-  { profileId: "kid1", displayName: "Trainer 1", avatar: "dragon", createdAt: "2026-10-01T00:00:00Z" },
-  { profileId: "kid2", displayName: "Trainer 2", avatar: "lightning", createdAt: "2026-10-01T00:00:00Z" },
+  { profileId: "kid1", displayName: "Trainer 1", avatar: "dragon", role: "player", hasPin: false, createdAt: "2026-10-01T00:00:00Z" },
+  { profileId: "kid2", displayName: "Trainer 2", avatar: "lightning", role: "player", hasPin: false, createdAt: "2026-10-01T00:00:00Z" },
 ];
 
 export function makeCard(overrides: Partial<Card> = {}): Card {

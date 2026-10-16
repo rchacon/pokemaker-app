@@ -1,4 +1,5 @@
-import type { Card, CardFields, GenerationResponse, Profile, Quota } from "../types";
+import type { Card, CardFields, GenerationResponse, Profile, Quota, UnlockResponse } from "../types";
+import { unlocks } from "./unlock";
 
 /** Same-origin base path: Vite proxies it locally, CloudFront routes it in AWS. */
 const BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "/api";
@@ -47,22 +48,34 @@ const json = (method: string, body?: unknown, headers?: Record<string, string>):
   headers,
 });
 
+/** Changes to a PIN-protected profile carry its unlock token (if we have one). */
+function asProfile(profileId: string, init: RequestInit): RequestInit {
+  const token = unlocks.token(profileId);
+  if (!token) return init;
+  return { ...init, headers: { ...(init.headers as Record<string, string>), Authorization: `Bearer ${token}` } };
+}
+
 export const api = {
   listProfiles: () => request<Profile[]>("/profiles"),
   listCards: (profileId: string) => request<Card[]>(`/profiles/${profileId}/cards`),
   getCard: (profileId: string, cardId: string) => request<Card>(`/profiles/${profileId}/cards/${cardId}`),
-  createCard: (profileId: string, fields: CardFields) => request<Card>(`/profiles/${profileId}/cards`, json("POST", fields)),
+  createCard: (profileId: string, fields: CardFields) =>
+    request<Card>(`/profiles/${profileId}/cards`, asProfile(profileId, json("POST", fields))),
   updateCard: (profileId: string, cardId: string, fields: CardFields, version: number) =>
-    request<Card>(`/profiles/${profileId}/cards/${cardId}`, json("PUT", { ...fields, version })),
+    request<Card>(`/profiles/${profileId}/cards/${cardId}`, asProfile(profileId, json("PUT", { ...fields, version }))),
   deleteCard: (profileId: string, cardId: string) =>
-    request<void>(`/profiles/${profileId}/cards/${cardId}`, json("DELETE")),
+    request<void>(`/profiles/${profileId}/cards/${cardId}`, asProfile(profileId, json("DELETE"))),
   duplicateCard: (profileId: string, cardId: string) =>
-    request<Card>(`/profiles/${profileId}/cards/${cardId}/duplicate`, json("POST")),
+    request<Card>(`/profiles/${profileId}/cards/${cardId}/duplicate`, asProfile(profileId, json("POST"))),
   generateArtwork: (profileId: string, cardId: string, requestId: string, description: string) =>
     request<GenerationResponse>(
       `/profiles/${profileId}/cards/${cardId}/artwork`,
-      json("POST", { description }, { "Idempotency-Key": requestId }),
+      asProfile(profileId, json("POST", { description }, { "Idempotency-Key": requestId })),
     ),
+  unlock: (profileId: string, pin: string) =>
+    request<UnlockResponse>(`/profiles/${profileId}/unlock`, json("POST", { pin })),
+  setPin: (profileId: string, pin: string) =>
+    request<UnlockResponse>(`/profiles/${profileId}/pin`, asProfile(profileId, json("PUT", { pin }))),
   getGeneration: (requestId: string) => request<GenerationResponse>(`/artwork/requests/${requestId}`),
   getQuota: () => request<Quota>("/artwork/quota"),
 };

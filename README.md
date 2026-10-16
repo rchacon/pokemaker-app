@@ -104,8 +104,23 @@ Exports render the card off-screen at its true print size, then rasterize it
 (`html-to-image`). Artwork is loaded with CORS from presigned S3 URLs, so the
 bucket's CORS rules (set in `pokemaker-infra`) must allow the site's origin.
 
+### PINs
+
+Each player can protect their collection with a 4-digit PIN ("🔐 Add a PIN" in
+the gallery). Anyone can still look at any collection; editing, copying,
+deleting and generating artwork ask for the PIN first, on a big keypad. A
+parent's PIN unlocks every profile, so it also resets a kid's forgotten PIN
+(unlock their profile, then "Change PIN").
+
+Unlocking lasts 2 hours, only in that browser tab, and ends when someone presses
+"Switch player" or "🔒 Lock". If it runs out mid-edit, the editor keeps the
+changes on the device, asks for the PIN again, then saves (`useCardEditor`'s
+`locked` state). The API enforces all of this; the app just keeps the tokens
+(`lib/unlock.ts`, `components/UnlockProvider.tsx`).
+
 ## Privacy note
 
 Profiles are a convenience for a family sharing a device; they are **not** logins.
-Anyone who can reach the API can see and change every card. See the security
-section of `pokemaker-api/README.md`.
+PINs stop siblings from changing each other's cards, but anyone who can reach
+the API can still see every card. See the security section of
+`pokemaker-api/README.md`.
