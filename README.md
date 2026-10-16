@@ -1,7 +1,7 @@
 # pokemaker-app
 
-The React frontend for **PokeMaker**: kids design their own trading cards and
-keep them in a collection.
+The React frontend for **PokeMaker**: kids design their own trading cards, see a
+live preview as they type, and keep them in a collection.
 
 React 19 + TypeScript + Vite + Tailwind CSS 4 + React Router, tested with Vitest and
 React Testing Library. Sibling repositories: [`pokemaker-api`](../pokemaker-api)
@@ -33,15 +33,18 @@ src/
 ├── App.tsx                    Routes
 ├── pages/
 │   ├── ProfilePicker.tsx      "Who's making cards today?"
-│   └── Gallery.tsx            One child's collection: copy, delete
+│   ├── Gallery.tsx            One child's collection: edit, copy, delete
+│   └── Editor.tsx             Form + live preview; autosave status
 ├── components/
 │   ├── PokemonCard.tsx/.css   The card itself (used everywhere)
-│   └── EnergyIcon.tsx         Original SVG type icons
+│   ├── EnergyIcon.tsx         Original SVG type icons
+│   └── editor/                Type picker, steppers, attack + energy-cost editors
 ├── hooks/
+│   ├── useCardEditor.ts       Load, local drafts, debounced autosave, conflicts
 │   └── useProfiles.ts
 └── lib/
     ├── api.ts                 Typed fetch client; structured ApiError
-    └── drafts.ts              localStorage: last profile
+    └── drafts.ts              localStorage: drafts, last profile
 ```
 
 ### One card renderer for everything
@@ -49,11 +52,23 @@ src/
 `PokemonCard` draws the whole card (name, HP, icons, attacks, weakness, borders)
 with HTML, CSS and SVG from card data. Only the creature picture comes from the
 AI, so changing text never needs new artwork. Every size inside the card uses
-`cqw` (container-query width units), so the same markup renders at any size,
-from gallery thumbnails to a full-size card.
+`cqw` (container-query width units), so the same markup renders:
+
+- the live preview, which updates on every keystroke with no server calls,
+- gallery thumbnails.
 
 Long names shrink smoothly (`lib/textFit.ts`) and long attack or flavor text is
 clamped, so the layout never breaks.
+
+### Saving
+
+- Every edit is written to `localStorage` immediately, so a closed tab or dead
+  battery doesn't lose work.
+- Saved cards autosave 1 s after the last change. Saves never overlap.
+- Each save sends the card's `version`. If another device saved first, the API
+  returns `409` and the editor asks "Keep mine" or "Use the other one" instead of
+  overwriting silently.
+- New cards stay a local draft until **Save card** is pressed.
 
 ## Privacy note
 

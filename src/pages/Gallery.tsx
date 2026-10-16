@@ -5,7 +5,7 @@ import { PokemonCard } from "../components/PokemonCard";
 import { ConfirmDialog, Notice } from "../components/ui";
 import { useProfiles } from "../hooks/useProfiles";
 import { ApiError, api } from "../lib/api";
-import { lastProfile } from "../lib/drafts";
+import { NEW_CARD, drafts, lastProfile } from "../lib/drafts";
 import type { Card } from "../types";
 
 export function Gallery() {
@@ -16,6 +16,7 @@ export function Gallery() {
   const [toDelete, setToDelete] = useState<Card | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const profile = profiles?.find((p) => p.profileId === profileId);
+  const hasNewDraft = drafts.get(profileId, NEW_CARD) !== null;
 
   const load = useCallback(async () => {
     setError(null);
@@ -55,6 +56,7 @@ export function Gallery() {
     setToDelete(null);
     try {
       await api.deleteCard(profileId, card.cardId);
+      drafts.clear(profileId, card.cardId);
       setCards((current) => current?.filter((c) => c.cardId !== card.cardId) ?? null);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Couldn't delete that card.");
@@ -70,6 +72,9 @@ export function Gallery() {
         </h1>
         <Link to="/players" className="btn">
           🔄 Switch player
+        </Link>
+        <Link to={`/p/${profileId}/cards/new`} className="btn btn-primary btn-lg">
+          {hasNewDraft ? "✏️ Finish my new card" : "➕ Make a new card"}
         </Link>
       </header>
 
@@ -89,13 +94,23 @@ export function Gallery() {
       {cards?.length === 0 && (
         <div className="panel mx-auto max-w-md p-8 text-center">
           <p className="font-display text-2xl font-semibold">No cards yet!</p>
+          <p className="mt-2 font-semibold text-ink-soft">Make your very first creature.</p>
+          <Link to={`/p/${profileId}/cards/new`} className="btn btn-primary btn-lg mt-5">
+            ➕ Make a card
+          </Link>
         </div>
       )}
 
       <ul className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" aria-label="Card collection">
         {cards?.map((card) => (
           <li key={card.cardId} className="flex flex-col gap-2">
-            <PokemonCard card={card} />
+            <Link
+              to={`/p/${profileId}/cards/${card.cardId}`}
+              className="block rounded-[5%] transition hover:-translate-y-1 hover:rotate-[-1deg] focus-visible:outline-4 focus-visible:outline-sky"
+              aria-label={`Edit ${card.name || "untitled card"}`}
+            >
+              <PokemonCard card={card} />
+            </Link>
             <div className="grid grid-cols-2 gap-1.5">
               <IconButton label={`Copy ${card.name}`} title="Make a copy" disabled={busy === card.cardId} onClick={() => void duplicate(card)}>
                 📄
