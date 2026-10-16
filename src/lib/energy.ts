@@ -28,3 +28,17 @@ export const STAGE_LABELS: Record<Stage, string> = {
   stage1: "Stage 1",
   stage2: "Stage 2",
 };
+
+/** A friendly default weakness for each type, used until the child picks their own. */
+export const SUGGESTED_WEAKNESS: Record<EnergyType, EnergyType> = {
+  grass: "fire",
+  fire: "water",
+  water: "lightning",
+  lightning: "fighting",
+  psychic: "darkness",
+  fighting: "psychic",
+  darkness: "fighting",
+  metal: "fire",
+  dragon: "dragon",
+  colorless: "fighting",
+};

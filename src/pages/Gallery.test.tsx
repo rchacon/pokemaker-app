@@ -13,7 +13,7 @@ describe("gallery", () => {
     renderApp("/p/kid1");
     const list = await screen.findByRole("list", { name: "Card collection" });
     expect(await within(list).findAllByTestId("pokemon-card")).toHaveLength(2);
-    expect(within(list).getByRole("button", { name: "Copy Sparkpup" })).toBeInTheDocument();
+    expect(within(list).getByRole("link", { name: "Edit Sparkpup" })).toHaveAttribute("href", `/p/kid1/cards/${SPARK.cardId}`);
     expect(api.callsTo("GET", "/profiles/kid1/cards")).toHaveLength(1);
     expect(api.callsTo("GET", "/profiles/kid2/cards")).toHaveLength(0);
   });
@@ -39,7 +39,7 @@ describe("gallery", () => {
     await user.click(screen.getByRole("button", { name: "Delete Sparkpup" }));
     await user.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete it" }));
     expect(api.callsTo("DELETE", `/cards/${SPARK.cardId}`)).toHaveLength(1);
-    expect(screen.queryByRole("button", { name: "Delete Sparkpup" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Edit Sparkpup" })).not.toBeInTheDocument();
   });
 
   it("duplicates a card", async () => {
@@ -51,7 +51,7 @@ describe("gallery", () => {
     });
     const { user } = renderApp("/p/kid1");
     await user.click(await screen.findByRole("button", { name: "Copy Layla" }));
-    expect(await screen.findByRole("button", { name: "Copy Layla Copy" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Edit Layla Copy" })).toBeInTheDocument();
     expect(api.callsTo("POST", "/duplicate")).toHaveLength(1);
   });
 });
