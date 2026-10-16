@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, Navigate, useParams } from "react-router";
+import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { Avatar } from "../components/Avatar";
 import { PokemonCard } from "../components/PokemonCard";
 import { ConfirmDialog, Notice } from "../components/ui";
 import { useProfiles } from "../hooks/useProfiles";
 import { ApiError, api } from "../lib/api";
 import { NEW_CARD, drafts, lastProfile } from "../lib/drafts";
+import { downloadCardPng } from "../lib/export/download";
 import type { Card } from "../types";
 
 export function Gallery() {
   const { profileId = "" } = useParams();
+  const navigate = useNavigate();
   const { profiles } = useProfiles();
   const [cards, setCards] = useState<Card[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +65,17 @@ export function Gallery() {
     }
   };
 
+  const savePng = async (card: Card) => {
+    setBusy(card.cardId);
+    try {
+      await downloadCardPng(card);
+    } catch {
+      setError("Couldn't make the picture. Try again!");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-6">
       <header className="mb-6 flex flex-wrap items-center gap-3">
@@ -73,6 +86,11 @@ export function Gallery() {
         <Link to="/players" className="btn">
           🔄 Switch player
         </Link>
+        {cards && cards.length > 0 && (
+          <Link to={`/p/${profileId}/print`} className="btn">
+            🖨️ Print cards
+          </Link>
+        )}
         <Link to={`/p/${profileId}/cards/new`} className="btn btn-primary btn-lg">
           {hasNewDraft ? "✏️ Finish my new card" : "➕ Make a new card"}
         </Link>
@@ -111,9 +129,15 @@ export function Gallery() {
             >
               <PokemonCard card={card} />
             </Link>
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-4 gap-1.5">
               <IconButton label={`Copy ${card.name}`} title="Make a copy" disabled={busy === card.cardId} onClick={() => void duplicate(card)}>
                 📄
+              </IconButton>
+              <IconButton label={`Save picture of ${card.name}`} title="Save as a picture" disabled={busy === card.cardId} onClick={() => void savePng(card)}>
+                🖼️
+              </IconButton>
+              <IconButton label={`Print ${card.name}`} title="Print" onClick={() => navigate(`/p/${profileId}/print?ids=${card.cardId}`)}>
+                🖨️
               </IconButton>
               <IconButton label={`Delete ${card.name}`} title="Delete" onClick={() => setToDelete(card)}>
                 🗑️

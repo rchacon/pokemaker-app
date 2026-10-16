@@ -10,6 +10,7 @@ import { useCardEditor } from "../hooks/useCardEditor";
 import { useProfiles } from "../hooks/useProfiles";
 import { useQuota } from "../hooks/useQuota";
 import { ApiError, api } from "../lib/api";
+import { downloadCardPng } from "../lib/export/download";
 import type { Card, CardView } from "../types";
 
 export function Editor() {
@@ -22,6 +23,7 @@ export function Editor() {
   const [otherCards, setOtherCards] = useState<Card[]>([]);
   const [view, setView] = useState<"edit" | "preview">("edit");
   const [problem, setProblem] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const generation = useArtworkGeneration({
     profileId,
@@ -79,6 +81,17 @@ export function Editor() {
     await generation.generate(fields.description.trim(), target.cardId);
   };
 
+  const exportPng = async () => {
+    setExporting(true);
+    try {
+      await downloadCardPng(preview);
+    } catch {
+      setProblem("Couldn't make the picture. Try again!");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <main className="mx-auto max-w-7xl px-4 pt-4 pb-28 md:pb-10">
       <header className="mb-4 flex flex-wrap items-center gap-2">
@@ -87,7 +100,16 @@ export function Editor() {
         </Link>
         <h1 className="mr-auto font-display text-2xl font-bold sm:text-3xl">{card ? "Edit card" : "New card"}</h1>
         <SaveStatus state={editor.saveState} />
-        {!card && (
+        {card ? (
+          <>
+            <button className="btn btn-sm" onClick={() => void exportPng()} disabled={exporting}>
+              🖼️ Picture
+            </button>
+            <Link className="btn btn-sm" to={`/p/${profileId}/print?ids=${card.cardId}`}>
+              🖨️ Print
+            </Link>
+          </>
+        ) : (
           <button className="btn btn-go" onClick={() => void saveNew()} disabled={editor.saveState === "saving"}>
             💾 Save card
           </button>

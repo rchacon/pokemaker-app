@@ -2,7 +2,81 @@ import { describe, expect, it } from "vitest";
 import { makeCard } from "../test/fixtures";
 import { changeType, newCardFields, sameFields, toFields } from "./cardDefaults";
 import { drafts } from "./drafts";
+import {
+  CARD_HEIGHT_IN,
+  CARD_SPACINGS,
+  CARD_WIDTH_IN,
+  cardPixelSize,
+  LETTER_HEIGHT_IN,
+  LETTER_WIDTH_IN,
+  MIN_PRINT_MARGIN_IN,
+  sheetLayout,
+} from "./export/layout";
+import { dataUrlToBytes, pngSize, readPngDpi, setPngDpi } from "./export/png";
 import { fitFontSize } from "./textFit";
+
+// A 1x1 transparent PNG.
+const TINY_PNG =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+
+describe("export dimensions", () => {
+  it("cards are 2.5 x 3.5 inches and 750 x 1050 px at 300 DPI", () => {
+    expect([CARD_WIDTH_IN, CARD_HEIGHT_IN]).toEqual([2.5, 3.5]);
+    expect(cardPixelSize(300)).toEqual({ width: 750, height: 1050 });
+    expect(cardPixelSize(600)).toEqual({ width: 1500, height: 2100 });
+  });
+
+  it("fits nine cards per Letter page, centered, sharing cut lines", () => {
+    const layout = sheetLayout(11);
+    expect(layout.pages.map((p) => p.length)).toEqual([9, 2]);
+    expect(layout.marginX).toBeCloseTo(0.5);
+    expect(layout.marginY).toBeCloseTo(0.25);
+    const first = layout.pages[0]!;
+    expect(first[0]).toEqual({ x: 0.5, y: 0.25 });
+    expect(first[1]).toEqual({ x: 3, y: 0.25 });
+    expect(first[3]).toEqual({ x: 0.5, y: 3.75 });
+    const last = first[8]!;
+    expect(last.x + CARD_WIDTH_IN).toBeCloseTo(LETTER_WIDTH_IN - 0.5);
+    expect(last.y + CARD_HEIGHT_IN).toBeCloseTo(LETTER_HEIGHT_IN - 0.25);
+    expect(layout.cutsX).toEqual([0.5, 3, 5.5, 8]);
+    expect(layout.cutsY).toEqual([0.25, 3.75, 7.25, 10.75]);
+  });
+
+  it("spaces cards apart for laminating, six per page, cutting through the middle of the gaps", () => {
+    const layout = sheetLayout(7, { gap: 0.25 });
+    expect([layout.columns, layout.rows]).toEqual([3, 2]);
+    expect(layout.pages.map((p) => p.length)).toEqual([6, 1]);
+    const [first, second, , fourth] = layout.pages[0]!;
+    expect(first).toEqual({ x: 0.25, y: 1.875 });
+    expect(second!.x - (first!.x + CARD_WIDTH_IN)).toBeCloseTo(0.25); // the gap
+    expect(fourth!.y - (first!.y + CARD_HEIGHT_IN)).toBeCloseTo(0.25);
+    // Cuts sit gap/2 outside every card edge, leaving a 1/8" sealed border.
+    expect(layout.cutsX).toEqual([0.125, 2.875, 5.625, 8.375]);
+    expect(layout.cutsY).toEqual([1.75, 5.5, 9.25]);
+    expect(first!.x - layout.cutsX[0]!).toBeCloseTo(0.125);
+  });
+
+  it("keeps every spacing option on the paper with a printable margin", () => {
+    for (const { gap } of CARD_SPACINGS) {
+      const layout = sheetLayout(1, { gap });
+      expect(layout.marginX).toBeGreaterThanOrEqual(MIN_PRINT_MARGIN_IN);
+      expect(layout.marginY).toBeGreaterThanOrEqual(MIN_PRINT_MARGIN_IN);
+      expect(layout.columns * layout.rows).toBe(gap === 0 ? 9 : 6);
+    }
+  });
+
+  it("tags PNGs with their print resolution", () => {
+    const png = dataUrlToBytes(TINY_PNG);
+    expect(readPngDpi(png)).toBeNull();
+    const tagged = setPngDpi(png, 300);
+    expect(readPngDpi(tagged)).toBe(300);
+    expect(pngSize(tagged)).toEqual({ width: 1, height: 1 });
+    // Re-tagging replaces rather than duplicates the chunk.
+    const retagged = setPngDpi(tagged, 600);
+    expect(readPngDpi(retagged)).toBe(600);
+    expect(retagged.length).toBe(tagged.length);
+  });
+});
 
 describe("long text", () => {
   it("keeps short text at full size", () => {

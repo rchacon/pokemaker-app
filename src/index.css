@@ -126,6 +126,12 @@ body {
   }
 }
 
+@media print {
+  body {
+    background: #fff !important;
+  }
+}
+
 @keyframes pm-shake {
   0%,
   100% {
