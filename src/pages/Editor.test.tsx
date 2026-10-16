@@ -1,7 +1,7 @@
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { CardFields } from "../types";
-import { makeCard, PROFILES } from "../test/fixtures";
+import { makeCard, makeQuota, PROFILES } from "../test/fixtures";
 import { apiError, mockApi, reply, type MockRequest } from "../test/mockApi";
 import { renderApp } from "../test/render";
 
@@ -14,6 +14,7 @@ function editorApi(overrides: Parameters<typeof mockApi>[0] = {}) {
     "GET /api/profiles": () => PROFILES,
     "GET /api/profiles/:id/cards": () => [stored],
     "GET /api/profiles/:id/cards/:cardId": () => stored,
+    "GET /api/artwork/quota": () => makeQuota(7),
     "PUT /api/profiles/:id/cards/:cardId": (req: MockRequest) => {
       const body = req.body as CardFields & { version: number };
       stored = { ...stored, ...body, version: body.version + 1 };
@@ -152,5 +153,77 @@ describe("card editor", () => {
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(`/p/kid1/cards/${created.cardId}`));
     expect(api.callsTo("POST", "/cards")[0]!.body).toMatchObject({ name: "Zappy" });
     expect(localStorage.getItem("pokemaker:draft:kid1:new")).toBeNull();
+  });
+});
+
+describe("artwork generation", () => {
+  it("shows the remaining quota", async () => {
+    editorApi();
+    renderApp(EDIT_URL);
+    expect(await screen.findByText("Artwork generations remaining today: 7 / 10")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Generate artwork/ })).toBeEnabled();
+  });
+
+  it("disables the button and explains when the quota is used up", async () => {
+    editorApi({ "GET /api/artwork/quota": () => makeQuota(0) });
+    renderApp(EDIT_URL);
+    expect(await screen.findByText("Artwork generations remaining today: 0 / 10")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Generate artwork/ })).toBeDisabled();
+    expect(screen.getByText(/used all of today's artwork/)).toBeInTheDocument();
+  });
+
+  it("needs a description first", async () => {
+    editorApi({ "GET /api/profiles/:id/cards/:cardId": () => makeCard({ description: "" }) });
+    renderApp(EDIT_URL);
+    expect(await screen.findByRole("button", { name: /Generate artwork/ })).toBeDisabled();
+  });
+
+  it("generates artwork with an idempotency key and shows it", async () => {
+    const withArt = makeCard({ artworkUrl: "https://art.test/v1.webp", artworkKey: "k/v1.webp", artworkVersion: 1 });
+    const api = editorApi({
+      "POST /api/profiles/:id/cards/:cardId/artwork": () => ({
+        requestId: "r1", status: "SUCCEEDED", reservation: "CONSUMED", card: withArt, error: null, quota: makeQuota(6),
+      }),
+    });
+    const { user } = renderApp(EDIT_URL);
+    await user.click(await screen.findByRole("button", { name: /Generate artwork/ }));
+    expect(await preview().findByRole("img", { name: "Artwork of Layla" })).toHaveAttribute("src", "https://art.test/v1.webp");
+    expect(screen.getByText("Artwork generations remaining today: 6 / 10")).toBeInTheDocument();
+    const post = api.callsTo("POST", "/artwork")[0]!;
+    expect(post.headers["Idempotency-Key"]).toMatch(/^[0-9a-f-]{36}$/);
+    expect(post.body).toEqual({ description: CARD.description });
+    expect(screen.getByRole("button", { name: /Draw new artwork/ })).toBeInTheDocument();
+  });
+
+  it("polls the same request after a gateway timeout instead of paying again", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const withArt = makeCard({ artworkUrl: "https://art.test/v1.webp" });
+    let polls = 0;
+    const api = editorApi({
+      "POST /api/profiles/:id/cards/:cardId/artwork": () => reply(504, { message: "Gateway Timeout" }),
+      "GET /api/artwork/requests/:requestId": () =>
+        ++polls < 2
+          ? { requestId: "r", status: "CALLING_PROVIDER", reservation: "RESERVED", card: null, error: null, quota: makeQuota(6) }
+          : { requestId: "r", status: "SUCCEEDED", reservation: "CONSUMED", card: withArt, error: null, quota: makeQuota(6) },
+    });
+    const { user } = renderApp(EDIT_URL, { advanceTimers: vi.advanceTimersByTime });
+    await user.click(await screen.findByRole("button", { name: /Generate artwork/ }));
+    expect(await screen.findByRole("button", { name: /Drawing your creature/ })).toBeDisabled();
+
+    await act(() => vi.advanceTimersByTimeAsync(7000));
+    expect(await preview().findByRole("img", { name: "Artwork of Layla" })).toBeInTheDocument();
+    expect(api.callsTo("POST", "/artwork")).toHaveLength(1);
+    const requestId = api.callsTo("POST", "/artwork")[0]!.headers["Idempotency-Key"];
+    expect(api.callsTo("GET", `/artwork/requests/${requestId}`)).toHaveLength(2);
+  });
+
+  it("shows the server's friendly message when the art is refused", async () => {
+    editorApi({
+      "POST /api/profiles/:id/cards/:cardId/artwork": () =>
+        apiError(422, "ARTWORK_REJECTED", "Try describing your creature differently!"),
+    });
+    const { user } = renderApp(EDIT_URL);
+    await user.click(await screen.findByRole("button", { name: /Generate artwork/ }));
+    expect(await screen.findByText("Try describing your creature differently!")).toBeInTheDocument();
   });
 });

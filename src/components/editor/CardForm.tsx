@@ -11,9 +11,11 @@ interface Props {
   onChange: (update: (previous: CardFields) => CardFields) => void;
   /** The child's other cards, offered as "evolves from" choices. */
   otherCards: Card[];
+  /** Slot for the artwork controls, shown in the "Looks" section. */
+  artworkControls?: React.ReactNode;
 }
 
-export function CardForm({ fields, onChange, otherCards }: Props) {
+export function CardForm({ fields, onChange, otherCards, artworkControls }: Props) {
   const set = <K extends keyof CardFields>(key: K, value: CardFields[K]) =>
     onChange((previous) => ({ ...previous, [key]: value }));
 
@@ -117,6 +119,7 @@ export function CardForm({ fields, onChange, otherCards }: Props) {
             onChange={(e) => set("description", e.target.value)}
           />
         </Field>
+        {artworkControls}
         <Field label="Card story (optional)" htmlFor="card-flavor" count={fields.flavorText.length} max={LIMITS.flavorText}>
           <textarea
             id="card-flavor"

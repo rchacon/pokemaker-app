@@ -1,4 +1,4 @@
-import type { Card, CardFields, Profile } from "../types";
+import type { Card, CardFields, GenerationResponse, Profile, Quota } from "../types";
 
 /** Same-origin base path: Vite proxies it locally, CloudFront routes it in AWS. */
 const BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "/api";
@@ -58,4 +58,11 @@ export const api = {
     request<void>(`/profiles/${profileId}/cards/${cardId}`, json("DELETE")),
   duplicateCard: (profileId: string, cardId: string) =>
     request<Card>(`/profiles/${profileId}/cards/${cardId}/duplicate`, json("POST")),
+  generateArtwork: (profileId: string, cardId: string, requestId: string, description: string) =>
+    request<GenerationResponse>(
+      `/profiles/${profileId}/cards/${cardId}/artwork`,
+      json("POST", { description }, { "Idempotency-Key": requestId }),
+    ),
+  getGeneration: (requestId: string) => request<GenerationResponse>(`/artwork/requests/${requestId}`),
+  getQuota: () => request<Quota>("/artwork/quota"),
 };

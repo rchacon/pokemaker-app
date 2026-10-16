@@ -1,7 +1,7 @@
 # pokemaker-app
 
 The React frontend for **PokeMaker**: kids design their own trading cards, see a
-live preview as they type, and keep them in a collection.
+live preview as they type, and add AI artwork.
 
 React 19 + TypeScript + Vite + Tailwind CSS 4 + React Router, tested with Vitest and
 React Testing Library. Sibling repositories: [`pokemaker-api`](../pokemaker-api)
@@ -34,17 +34,18 @@ src/
 ├── pages/
 │   ├── ProfilePicker.tsx      "Who's making cards today?"
 │   ├── Gallery.tsx            One child's collection: edit, copy, delete
-│   └── Editor.tsx             Form + live preview; autosave status
+│   └── Editor.tsx             Form + live preview + artwork; autosave status
 ├── components/
 │   ├── PokemonCard.tsx/.css   The card itself (used everywhere)
 │   ├── EnergyIcon.tsx         Original SVG type icons
 │   └── editor/                Type picker, steppers, attack + energy-cost editors
 ├── hooks/
 │   ├── useCardEditor.ts       Load, local drafts, debounced autosave, conflicts
-│   └── useProfiles.ts
+│   ├── useArtworkGeneration.ts  Idempotent generate + polling
+│   └── useQuota.ts, useProfiles.ts
 └── lib/
     ├── api.ts                 Typed fetch client; structured ApiError
-    └── drafts.ts              localStorage: drafts, last profile
+    └── drafts.ts              localStorage: drafts, last profile, pending generation
 ```
 
 ### One card renderer for everything
@@ -68,7 +69,16 @@ clamped, so the layout never breaks.
 - Each save sends the card's `version`. If another device saved first, the API
   returns `409` and the editor asks "Keep mine" or "Use the other one" instead of
   overwriting silently.
-- New cards stay a local draft until **Save card** is pressed.
+- New cards stay a local draft until **Save card** is pressed. Pressing **Generate
+  artwork** saves them automatically.
+
+### Artwork
+
+Each press of **Generate artwork** sends a fresh `Idempotency-Key`. If the response
+is lost (a proxy timeout, a Wi-Fi drop, a page reload), the app polls
+`/api/artwork/requests/{id}` for that same request. It never presses "generate"
+again on the child's behalf, because that could cost twice. The remaining daily
+quota is shown under the button, which is disabled when the quota runs out.
 
 ## Privacy note
 

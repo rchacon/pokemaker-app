@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
+import { ArtworkControls } from "../components/ArtworkControls";
 import { PokemonCard } from "../components/PokemonCard";
 import { SaveStatus } from "../components/SaveStatus";
 import { CardForm } from "../components/editor/CardForm";
 import { Notice } from "../components/ui";
+import { useArtworkGeneration } from "../hooks/useArtworkGeneration";
 import { useCardEditor } from "../hooks/useCardEditor";
 import { useProfiles } from "../hooks/useProfiles";
+import { useQuota } from "../hooks/useQuota";
 import { ApiError, api } from "../lib/api";
 import type { Card, CardView } from "../types";
 
@@ -15,9 +18,17 @@ export function Editor() {
   const editor = useCardEditor(profileId, cardId);
   const { profiles } = useProfiles();
   const profile = profiles?.find((p) => p.profileId === profileId);
+  const { quota, setQuota } = useQuota();
   const [otherCards, setOtherCards] = useState<Card[]>([]);
   const [view, setView] = useState<"edit" | "preview">("edit");
   const [problem, setProblem] = useState<string | null>(null);
+
+  const generation = useArtworkGeneration({
+    profileId,
+    cardId: editor.card?.cardId ?? null,
+    onArtwork: editor.applyArtwork,
+    onQuota: setQuota,
+  });
 
   useEffect(() => {
     // Only used for "evolves from" suggestions, so failures are fine to ignore.
@@ -58,6 +69,14 @@ export function Editor() {
       setProblem(e instanceof ApiError ? e.message : "Couldn't save the card. Try again!");
       return null;
     }
+  };
+
+  const generate = async () => {
+    setView("preview");
+    const target = card ?? (await saveNew());
+    if (!target) return;
+    void editor.saveNow();
+    await generation.generate(fields.description.trim(), target.cardId);
   };
 
   return (
@@ -112,14 +131,27 @@ export function Editor() {
             fields={fields}
             onChange={editor.update}
             otherCards={otherCards}
+            artworkControls={
+              <button type="button" className="btn btn-magic md:hidden" onClick={() => setView("preview")}>
+                🎨 Make the artwork
+              </button>
+            }
           />
         </div>
 
         <aside className={view === "preview" ? "" : "hidden md:block"} aria-label="Card preview">
           <div className="flex flex-col gap-4 md:sticky md:top-4">
             <div className="mx-auto w-full max-w-[340px] md:max-w-none">
-              <PokemonCard card={preview} showArtHint />
+              <PokemonCard card={preview} generating={generation.working} showArtHint />
             </div>
+            <ArtworkControls
+              quota={quota}
+              hasArtwork={Boolean(card?.artworkUrl)}
+              hasDescription={fields.description.trim().length > 0}
+              working={generation.working}
+              message={generation.message}
+              onGenerate={() => void generate()}
+            />
           </div>
         </aside>
       </div>

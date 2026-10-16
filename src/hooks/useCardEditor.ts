@@ -212,6 +212,18 @@ export function useCardEditor(profileId: string, cardId: string | undefined, deb
     }
   }, [profileId]);
 
+  /** Merge artwork from a finished generation without touching unsaved text edits. */
+  const applyArtwork = useCallback((updated: Card) => {
+    const current = cardRef.current;
+    if (!current || current.cardId !== updated.cardId) return;
+    setCard({
+      ...current,
+      artworkKey: updated.artworkKey,
+      artworkUrl: updated.artworkUrl,
+      artworkVersion: updated.artworkVersion,
+    });
+  }, []);
+
   const resolveConflict = useCallback(
     (keep: "mine" | "theirs") => {
       const newer = conflictRef.current;
@@ -258,6 +270,7 @@ export function useCardEditor(profileId: string, cardId: string | undefined, deb
     update,
     create,
     saveNow,
+    applyArtwork,
     resolveConflict,
     resolveStaleDraft,
   };

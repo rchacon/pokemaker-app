@@ -68,6 +68,25 @@ export interface Profile {
   createdAt: string;
 }
 
+export interface Quota {
+  date: string;
+  used: number;
+  limit: number;
+  remaining: number;
+  resetsAt: string;
+}
+
+export type GenerationStatus = "PENDING" | "CALLING_PROVIDER" | "STORING" | "SUCCEEDED" | "FAILED";
+
+export interface GenerationResponse {
+  requestId: string;
+  status: GenerationStatus;
+  reservation: "RESERVED" | "CONSUMED" | "RELEASED";
+  card: Card | null;
+  error: { code: string; message: string } | null;
+  quota: Quota;
+}
+
 /** Mirrors the API's validation limits so the UI can stop kids before the server does. */
 export const LIMITS = {
   name: 24,
