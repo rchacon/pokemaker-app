@@ -19,7 +19,7 @@ interface Props {
  * The trading card, drawn entirely with HTML/CSS/SVG from card data. Only the
  * creature picture is AI-generated; every word, number, icon and border comes
  * from here — so editing text never needs new artwork, and the same component
- * renders the live preview and the gallery.
+ * renders the live preview, the gallery, PNG/PDF exports and printed sheets.
  *
  * All sizes are in cqw (1% of the card's width), so the card scales perfectly
  * to any width while keeping its 5:7 (2.5 x 3.5 in) proportions.

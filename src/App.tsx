@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router";
 import { lastProfile } from "./lib/drafts";
 import { Editor } from "./pages/Editor";
 import { Gallery } from "./pages/Gallery";
+import { PrintSheet } from "./pages/PrintSheet";
 import { ProfilePicker } from "./pages/ProfilePicker";
 
 function Home() {
@@ -17,6 +18,7 @@ export function App() {
       <Route path="/p/:profileId" element={<Gallery />} />
       <Route path="/p/:profileId/cards/new" element={<Editor key="new" />} />
       <Route path="/p/:profileId/cards/:cardId" element={<Editor />} />
+      <Route path="/p/:profileId/print" element={<PrintSheet />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

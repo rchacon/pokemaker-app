@@ -31,7 +31,7 @@ export function ArtworkControls({ quota, hasArtwork, hasDescription, working, me
       <QuotaMeter quota={quota} />
       {exhausted && quota && (
         <Notice tone="warn">
-          You've used all of today's artwork. More arrive at {friendlyResetTime(quota.resetsAt)}! You can still edit
+          You've used all of today's artwork. More arrive at {friendlyResetTime(quota.resetsAt)}! You can still edit and print
           your cards.
         </Notice>
       )}

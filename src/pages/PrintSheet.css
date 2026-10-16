@@ -1,0 +1,67 @@
+.print-sheet {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(30, 42, 74, 0.25);
+}
+
+.print-slot {
+  position: absolute;
+}
+
+.print-slot--guides {
+  outline: 0.5pt dashed #b0b0b0;
+}
+
+.crop-mark {
+  position: absolute;
+  background: #777;
+}
+
+.crop-mark--v {
+  width: 0.5pt;
+  transform: translateX(-0.25pt);
+}
+
+.crop-mark--h {
+  height: 0.5pt;
+  transform: translateY(-0.25pt);
+}
+
+/* Cut lines through the gaps between spaced-out cards. */
+.cut-line {
+  position: absolute;
+  border-color: #aaa;
+  border-style: dashed;
+  border-width: 0;
+}
+
+.cut-line--v {
+  border-left-width: 0.5pt;
+  transform: translateX(-0.25pt);
+}
+
+.cut-line--h {
+  border-top-width: 0.5pt;
+  transform: translateY(-0.25pt);
+}
+
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 0;
+  }
+
+  .scaled-sheet {
+    zoom: 1 !important;
+  }
+
+  .print-sheet {
+    box-shadow: none;
+    break-after: page;
+  }
+
+  .print-sheet:last-child {
+    break-after: auto;
+  }
+}
