@@ -8,6 +8,7 @@ import type { CardFields } from "../types";
 
 const PREFIX = "pokemaker:draft";
 const LAST_PROFILE = "pokemaker:lastProfile";
+const PENDING_GENERATION = "pokemaker:pendingGeneration";
 
 export interface Draft {
   fields: CardFields;
@@ -49,4 +50,11 @@ export const lastProfile = {
   get: () => read<string>(LAST_PROFILE),
   set: (profileId: string) => write(LAST_PROFILE, profileId),
   clear: () => write(LAST_PROFILE, null),
+};
+
+/** Remembers an in-flight artwork request so a reload can pick up its result. */
+export const pendingGeneration = {
+  get: (cardId: string) => read<string>(`${PENDING_GENERATION}:${cardId}`),
+  set: (cardId: string, requestId: string) => write(`${PENDING_GENERATION}:${cardId}`, requestId),
+  clear: (cardId: string) => write(`${PENDING_GENERATION}:${cardId}`, null),
 };

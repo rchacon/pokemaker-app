@@ -1,4 +1,4 @@
-import type { Card, Profile } from "../types";
+import type { Card, Profile, Quota } from "../types";
 
 export const PROFILES: Profile[] = [
   { profileId: "kid1", displayName: "Trainer 1", avatar: "dragon", createdAt: "2026-10-01T00:00:00Z" },
@@ -35,4 +35,8 @@ export function makeCard(overrides: Partial<Card> = {}): Card {
     updatedAt: "2026-10-13T00:00:00Z",
     ...overrides,
   };
+}
+
+export function makeQuota(remaining = 7, limit = 10): Quota {
+  return { date: "2026-10-13", used: limit - remaining, limit, remaining, resetsAt: "2026-10-14T00:00:00.000Z" };
 }
